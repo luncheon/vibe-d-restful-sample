@@ -1,0 +1,12 @@
+{
+	"name": "vibe-d-restful-sample",
+	"description": "A sample of vibe.d RESTful application.",
+	"copyright": "Copyright © 2015, luncheon",
+	"authors": ["luncheon"],
+    "homepage": "https://github.com/luncheon/vibe-d-restful-sample",
+	"dependencies": {
+		"vibe-d": "~>0.7.19"
+	},
+	"versions": ["VibeDefaultMain"],
+    "targetPath": "bin"
+}

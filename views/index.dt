@@ -1,0 +1,99 @@
+doctype html
+html
+	head
+		meta(charset="utf-8")
+		title Users
+		link(rel="stylesheet", type="text/css", href="//w2ui.com/src/w2ui-1.4.2.min.css")
+		script(src="//code.jquery.com/jquery-git2.min.js")
+		script(src="//w2ui.com/src/w2ui-1.4.2.min.js")
+		:css
+			.w2ui-col-on-off td[colspan="2"] { display: none; } /* hide 'Save Grid State', 'Restore Default State' */
+		:javascript
+			if (navigator.language === 'ja' || navigator.language === 'ja-JP') {
+				w2utils.locale('https://rawgit.com/vitmalina/w2ui-dist/master/locale/ja-jp.json');
+			}
+			var api = {
+				users: {
+					error: function (xhr, status, thrown) {
+						console.error({xhr: xhr, status: status, thrown: thrown});
+						alert(thrown);
+					},
+					get: function () {
+						return $.get('/users').fail(api.users.error);
+					},
+					create: function (id, name) {
+						return $.post({
+							url: '/users',
+							contentType: 'application/json',
+							data: JSON.stringify({id: parseInt(id), name: name}),
+							dataType: 'json',
+						}).fail(api.users.error);
+					},
+					update: function (id, name) {
+						return $.ajax('/users/' + id, {
+							type: 'PUT',
+							contentType: 'application/json',
+							data: JSON.stringify({name: name}),
+							dataType: 'json',
+						}).fail(api.users.error);
+					},
+					delete: function (id) {
+						return $.ajax('/users/' + id, {type: 'DELETE'}).fail(api.users.error);
+					},
+				}
+			};
+	body
+		#users
+		:javascript
+			$('#users').w2grid({
+				name: 'users',
+				header: 'Users',
+				fixedBody: false,
+				show: {
+					header:        true,
+					toolbar:       true,
+					toolbarAdd:    true,
+					toolbarDelete: true,
+				},
+				columns: [
+					{ field: 'recid', caption: 'ID',   size: '30%', sortable: true },
+					{ field: 'name',  caption: 'Name', size: '70%', sortable: true, editable: {type: 'text'} },
+				],
+				onReload: function (event) {
+					var self = this;
+					api.users.get().done(function (data) {
+						self.records = data.map(function (item) { return {recid: item.id, name: item.name} });
+						self.refresh();
+					});
+				},
+				onAdd: function (event) {
+					var newid = this.records.reduce(function (max, item) { return Math.max(max, item.recid) }, 0) + 1;
+					this.add({ recid: newid, name: '' });
+					this.editField(newid, 1);
+				},
+				onDelete: function (event) {
+					var self = this;
+					if (event.force) {
+						this.getSelection().forEach(function (id) {
+							api.users.delete(id).done($.proxy(self.onReload, self));
+						});
+					}
+				},
+				onRestore: function (event) {
+					if (!event.value_new) {
+						alert(this.columns[event.column].caption + ' must not be empty.');
+						event.preventDefault();
+						this.remove(event.recid);
+					}
+				},
+				onChange: function (event) {
+					if (!event.value_new) {
+						alert(this.columns[event.column].caption + ' must not be empty.');
+						event.preventDefault();
+					} else if (event.value_original) {
+						api.users.update(event.recid, event.value_new).done($.proxy(this.onReload, this));
+					} else {
+						api.users.create(event.recid, event.value_new).done($.proxy(this.onReload, this));
+					}
+				},
+			}).onReload();
