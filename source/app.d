@@ -1,11 +1,13 @@
 import vibe.d;
 
-struct User {
+struct User
+{
     int id;
     string name;
 }
 
-interface IUserApi {
+interface IUserApi
+{
     @path("")     User[] get();
     @path(":id")  User   get(int _id);
     @path("")     void   add(int id_, string name);
@@ -13,38 +15,50 @@ interface IUserApi {
     @path(":id")  void   remove(int _id);
 }
 
-class UserApi : IUserApi {
+class UserApi : IUserApi
+{
     private User[int] _users;
 
-    this(User[] users) {
-        foreach (user; users) {
+    this(User[] users)
+    {
+        foreach (user; users)
+        {
             _users[user.id] = user;
         }
     }
 
-    User[] get() {
-        return _users.values;
-    }
+    override
+    {
+        User[] get()
+        {
+            return _users.values;
+        }
 
-    User get(int id) {
-        return *enforceHTTP(id in _users, HTTPStatus.notFound);
-    }
+        User get(int id)
+        {
+            return *enforceHTTP(id in _users, HTTPStatus.notFound);
+        }
 
-    void add(int id, string name) {
-        enforceHTTP(id !in _users, HTTPStatus.conflict);
-        _users[id] = User(id, name);
-    }
+        void add(int id, string name)
+        {
+            enforceHTTP(id !in _users, HTTPStatus.conflict);
+            _users[id] = User(id, name);
+        }
 
-    void remove(int id) {
-        _users.remove(id);
-    }
+        void remove(int id)
+        {
+            _users.remove(id);
+        }
 
-    void put(int id, string name) {
-        enforceHTTP(id in _users, HTTPStatus.notFound).name = name;
+        void put(int id, string name)
+        {
+            enforceHTTP(id in _users, HTTPStatus.notFound).name = name;
+        }
     }
 }
 
-shared static this() {
+shared static this()
+{
     auto router = new URLRouter();
     router.get("/", (req, res) => res.render!("index.dt", req));
     router.registerRestInterface(new UserApi([User(1, "Alice"), User(2, "Bob")]), "users");
