@@ -14,32 +14,22 @@ html
 			}
 			var api = {
 				users: {
-					error: function (xhr, status, thrown) {
-						console.error({xhr: xhr, status: status, thrown: thrown});
-						alert(thrown);
-					},
-					get: function () {
-						return $.get('/users').fail(api.users.error);
-					},
-					create: function (id, name) {
-						return $.post({
-							url: '/users',
+					ajax: function (url, method, data) {
+						return $.ajax({
+							url:         url,
+							type:        method,
+							data:        JSON.stringify(data),
 							contentType: 'application/json',
-							data: JSON.stringify({id: parseInt(id), name: name}),
-							dataType: 'json',
-						}).fail(api.users.error);
+							dataType:    'json',
+						}).fail(function (xhr, status, thrown) {
+							console.error({xhr: xhr, status: status, thrown: thrown});
+							alert(thrown);
+						});
 					},
-					update: function (id, name) {
-						return $.ajax('/users/' + id, {
-							type: 'PUT',
-							contentType: 'application/json',
-							data: JSON.stringify({name: name}),
-							dataType: 'json',
-						}).fail(api.users.error);
-					},
-					delete: function (id) {
-						return $.ajax('/users/' + id, {type: 'DELETE'}).fail(api.users.error);
-					},
+					get:    function ()         { return api.users.ajax('/users',       'GET'); },
+					create: function (id, name) { return api.users.ajax('/users',       'POST', { id: parseInt(id), name: name }); },
+					update: function (id, name) { return api.users.ajax('/users/' + id, 'PUT' , { name: name }); },
+					delete: function (id)       { return api.users.ajax('/users/' + id, 'DELETE'); },
 				}
 			};
 	body
