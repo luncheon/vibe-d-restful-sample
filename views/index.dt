@@ -73,7 +73,7 @@ html
 					if (!event.value_new) {
 						alert(this.columns[event.column].caption + ' must not be empty.');
 						event.preventDefault();
-						this.remove(event.recid);
+						setTimeout($.proxy(this.remove, this, event.recid), 1);
 					}
 				},
 				onChange: function (event) {
