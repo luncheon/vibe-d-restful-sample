@@ -1,26 +1,30 @@
 import vibe.d;
+import std.algorithm;
 
 struct User
 {
-    int id;
+    int    index;
+    string id;
     string name;
 }
 
 interface IUserApi
 {
-    @path("")     User[] get();
-    @path(":id")  User   get(int _id);
-    @path("")     void   add(int id_, string name);
-    @path(":id")  void   put(int _id, string name);
-    @path(":id")  void   remove(int _id);
+    @path("")    User[] get();
+    @path(":id") User   get(string _id);
+    @path("")    void   add(string id_, string name);
+    @path(":id") void   set(string _id, string id_ = "", string name = ""); 
+    @path(":id") void   remove(string _id);
 }
 
 class UserApi : IUserApi
 {
-    private User[int] _users;
+    private User[string] _users;
+    private int _lastIndex;
 
     this(User[] users)
     {
+        _lastIndex = users.map!(user => user.index).reduce!max;
         foreach (user; users)
         {
             _users[user.id] = user;
@@ -31,28 +35,39 @@ class UserApi : IUserApi
     {
         User[] get()
         {
-            return _users.values;
+            return _users.values.sort!"a.index < b.index".array;
         }
 
-        User get(int id)
+        User get(string id)
         {
             return *enforceHTTP(id in _users, HTTPStatus.notFound);
         }
 
-        void add(int id, string name)
+        void add(string id, string name)
         {
+            enforceHTTP(id && id.length && name && name.length, HTTPStatus.badRequest);
             enforceHTTP(id !in _users, HTTPStatus.conflict);
-            _users[id] = User(id, name);
+            _users[id] = User(++_lastIndex, id, name);
         }
 
-        void remove(int id)
+        void set(string id, string newId = null, string name = null)
+        {
+            if (newId && newId.length && newId != id)
+            {
+                enforceHTTP(newId !in _users, HTTPStatus.conflict);
+                auto user = *enforceHTTP(id in _users, HTTPStatus.notFound);
+                _users.remove(id);
+                _users[newId] = User(user.index, newId, name && name.length ? name : user.name);
+            }
+            else if (name && name.length)
+            {
+                enforceHTTP(id in _users, HTTPStatus.notFound).name = name;
+            }
+        }
+
+        void remove(string id)
         {
             _users.remove(id);
-        }
-
-        void put(int id, string name)
-        {
-            enforceHTTP(id in _users, HTTPStatus.notFound).name = name;
         }
     }
 }
@@ -61,7 +76,8 @@ shared static this()
 {
     auto router = new URLRouter();
     router.get("/", (req, res) => res.render!("index.dt", req));
-    router.registerRestInterface(new UserApi([User(1, "Alice"), User(2, "Bob")]), "users");
+    router.get("*", serveStaticFiles("./public/"));
+    router.registerRestInterface(new UserApi([User(1, "alice", "Alice"), User(2, "bob", "Bob")]), "users");
 
     auto settings = new HTTPServerSettings;
     settings.port = 8080;

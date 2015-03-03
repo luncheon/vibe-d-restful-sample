@@ -3,15 +3,15 @@ html
     head
         meta(charset="utf-8")
         title Users
-        link(rel="stylesheet", type="text/css", href="//w2ui.com/src/w2ui-1.4.2.min.css")
+        link(rel="stylesheet", type="text/css", href="/w2ui/w2ui-1.4.2.min.css")
         script(src="//code.jquery.com/jquery-git2.min.js")
-        script(src="//w2ui.com/src/w2ui-1.4.2.min.js")
+        script(src="/w2ui/w2ui-1.4.2.min.js")
         :css
             .w2ui-reset, .w2ui-reset table, .w2ui-tag .w2ui-tag-body, .w2ui-lock-msg, .w2ui-list ul li, .w2ui-list ul li:last-child input, .w2ui-overlay .w2ui-select-field table, .w2ui-popup, body { font-family: Verdana,'Meiryo UI',Arial,sans-serif; }
             .w2ui-col-on-off td[colspan="2"] { display: none; } /* hide 'Save Grid State', 'Restore Default State' */
         :javascript
             if (navigator.language === 'ja' || navigator.language === 'ja-JP') {
-                w2utils.locale('https://rawgit.com/vitmalina/w2ui-dist/master/locale/ja-jp.json');
+                w2utils.locale('/w2ui/locale/ja-jp.json');
             }
             var api = {
                 users: {
@@ -23,19 +23,20 @@ html
                             contentType: 'application/json',
                             dataType:    'json',
                         }).fail(function (xhr, status, thrown) {
-                            console.error({xhr: xhr, status: status, thrown: thrown});
+                            console.error({xhr: xhr, status: status, thrown: thrown}, xhr.responseText);
                             alert(thrown);
                         });
                     },
                     get:    function ()         { return api.users.ajax('/users',       'GET'); },
-                    create: function (id, name) { return api.users.ajax('/users',       'POST', { id: parseInt(id), name: name }); },
-                    update: function (id, name) { return api.users.ajax('/users/' + id, 'PUT' , { name: name }); },
                     delete: function (id)       { return api.users.ajax('/users/' + id, 'DELETE'); },
+                    create: function (data)     { return api.users.ajax('/users',       'POST', data); },
+                    update: function (id, data) { return api.users.ajax('/users/' + id, 'PUT',  data); },
                 }
             };
     body
         #users
         :javascript
+            var deletedIds = [];
             $('#users').w2grid({
                 name: 'users',
                 header: 'Users',
@@ -45,46 +46,44 @@ html
                     toolbar:       true,
                     toolbarAdd:    true,
                     toolbarDelete: true,
+                    toolbarSave:   true,
                 },
                 columns: [
-                    { field: 'recid', caption: 'ID',   size: '30%', sortable: true },
-                    { field: 'name',  caption: 'Name', size: '70%', sortable: true, editable: {type: 'text'} },
+                    { field: 'id',   caption: 'ID',   size: '30%', editable: {type: 'text'} },
+                    { field: 'name', caption: 'Name', size: '50%', editable: {type: 'text'} },
                 ],
                 onReload: function (event) {
                     var self = this;
+                    deletedIds = [];
                     api.users.get().done(function (data) {
-                        self.records = data.map(function (item) { return {recid: item.id, name: item.name} });
+                        self.records = data.map(function (item) { return {recid: item.index, originalId: item.id, id: item.id, name: item.name} });
                         self.refresh();
                     });
                 },
                 onAdd: function (event) {
                     var newid = this.records.reduce(function (max, item) { return Math.max(max, item.recid) }, 0) + 1;
-                    this.add({ recid: newid, name: '' });
-                    this.editField(newid, 1);
+                    this.add({ recid: newid, id: '', name: '' });
+                    this.editField(newid, 0);
                 },
                 onDelete: function (event) {
-                    var self = this;
-                    if (event.force) {
-                        this.getSelection().forEach(function (id) {
-                            api.users.delete(id).done($.proxy(self.onReload, self));
-                        });
-                    }
+                    this.getSelection().forEach(function (recid) {
+                        var id = this.get(recid).originalId;
+                        if (typeof id !== 'undefined') {
+                            deletedIds.push(id);
+                        }
+                    }, this);
+                    event.force = true;
                 },
-                onRestore: function (event) {
-                    if (!event.value_new) {
-                        alert(this.columns[event.column].caption + ' must not be empty.');
-                        event.preventDefault();
-                        setTimeout($.proxy(this.remove, this, event.recid), 1);
-                    }
-                },
-                onChange: function (event) {
-                    if (!event.value_new) {
-                        alert(this.columns[event.column].caption + ' must not be empty.');
-                        event.preventDefault();
-                    } else if (event.value_original) {
-                        api.users.update(event.recid, event.value_new).done($.proxy(this.onReload, this));
-                    } else {
-                        api.users.create(event.recid, event.value_new).done($.proxy(this.onReload, this));
-                    }
+                onSubmit: function (event) {
+                    var deferreds = deletedIds.map(api.users.delete)
+                        .concat(event.changes.map(function (changes) {
+                            var record = this.get(changes.recid);
+                            if (record.originalId) {
+                                return api.users.update(record.originalId, changes);
+                            } else {
+                                return api.users.create(changes);
+                            }
+                        }, this));
+                    $.when.apply($, deferreds).then($.proxy(this.onReload, this));
                 },
             }).onReload();
