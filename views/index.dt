@@ -10,10 +10,8 @@ html
             body { font-family: Verdana,'Meiryo UI',Arial,sans-serif; }
             .w2ui-reset, .w2ui-reset table, .w2ui-tag .w2ui-tag-body, .w2ui-lock-msg, .w2ui-list ul li, .w2ui-list ul li:last-child input, .w2ui-overlay .w2ui-select-field table, .w2ui-popup { font-family: inherit; }
             .w2ui-col-on-off td[colspan="2"] { display: none; } /* hide 'Save Grid State', 'Restore Default State' */
+        script& w2ui.localize
         :javascript
-            if (navigator.language === 'ja' || navigator.language === 'ja-JP') {
-                w2utils.locale('/w2ui/locale/ja-jp.json');
-            }
             var api = {
                 users: {
                     ajax: function (url, method, data) {

@@ -1,22 +1,39 @@
 import user;
 import vibe.d;
 import hibernated.core;
+import std.typetuple;
+
+struct TranslationContext
+{
+    alias languages = TypeTuple!("en_US", "ja_JP");
+    mixin translationModule!"common";
+    enum enforceExistingKeys = true;
+}
+
+@translationContext!TranslationContext
+class WebInterface
+{
+    void index(HTTPServerRequest req, HTTPServerResponse res)
+    {
+        render!"index.dt";
+    }
+}
 
 int main()
 {
-    DataSource dataSource = new ConnectionPoolDataSourceImpl(new SQLITEDriver(), "users.db");
-    SessionFactory sessionFactory = new SessionFactoryImpl(new SchemaInfoImpl!User, new SQLiteDialect, dataSource);
+    auto dataSource = new ConnectionPoolDataSourceImpl(new SQLITEDriver(), "users.db");
+    auto sessionFactory = new SessionFactoryImpl(new SchemaInfoImpl!User, new SQLiteDialect, dataSource);
     scope(exit) sessionFactory.close();
 
     {
-        Connection connection = dataSource.getConnection();
+        auto connection = dataSource.getConnection();
         scope(exit) connection.close();
         sessionFactory.getDBMetaData().updateDBSchema(connection, false, true);
     }
 
     auto router = new URLRouter();
-    router.get("/", (req, res) => res.render!("index.dt", req));
     router.get("*", serveStaticFiles("./public/"));
+    router.registerWebInterface(new WebInterface);
     router.registerRestInterface(new UserApi(sessionFactory), "users");
 
     auto settings = new HTTPServerSettings;

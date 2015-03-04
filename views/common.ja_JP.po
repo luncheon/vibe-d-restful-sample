@@ -1,0 +1,2 @@
+msgid "w2ui.localize"
+msgstr "w2utils.locale('/w2ui/locale/ja-jp.json');"
