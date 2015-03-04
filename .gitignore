@@ -5,3 +5,4 @@ docs.json
 *.obj
 *.dll
 *.exe
+*.db

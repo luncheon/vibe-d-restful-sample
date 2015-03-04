@@ -1,6 +1,10 @@
 ## vibe.d RESTful sample
 
-for my study.
+A simple web application that presents minimal usage of following frameworks or libraries.
+
+* [vibe.d](http://vibed.org/)
+* [HibernateD](https://github.com/buggins/hibernated)
+* [w2ui](http://w2ui.com/) - w2grid
 
 
 ### Quick Start on Windows
@@ -21,9 +25,3 @@ cinst dub
 cd <project-root>
 dub
 ```
-
-
-### See Also
-
-* [vibe.d](http://vibed.org/)
-* [w2ui](http://w2ui.com/)
