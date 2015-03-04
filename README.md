@@ -1,6 +1,6 @@
 ## vibe.d RESTful sample
 
-A simple web application that presents minimal usage of following frameworks or libraries.
+A simple web application that presents minimal usage of following frameworks.
 
 * [vibe.d](http://vibed.org/)
 * [HibernateD](https://github.com/buggins/hibernated)
@@ -9,19 +9,19 @@ A simple web application that presents minimal usage of following frameworks or 
 
 ### Quick Start on Windows
 
-* Install [dmd](http://dlang.org/download.html) and [dub](http://code.dlang.org/).
+1. Install [dmd](http://dlang.org/download.html) and [dub](http://code.dlang.org/).<br>
   Quickest way may be via [Chocolatey](https://chocolatey.org/), as following commands with administrator privileges.
 
-```
+ ```
 @powershell -NoProfile -ExecutionPolicy unrestricted -Command "iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))" && SET PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin
 
 cinst dmd
 cinst dub
 ```
 
-* Start server.
+2. Start server.
 
-```
+ ```
 cd <project-root>
 dub
 ```
