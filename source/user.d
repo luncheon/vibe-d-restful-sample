@@ -1,35 +1,49 @@
 import vibe.d;
-import hibernated.core;
+import db = hibernated.core;
+import std.digest.sha;
 
 // hibernated session closing utility
 private struct closing
 {
-    this(hibernated.session.Session session)
+    this(db.Session dbSession)
     {
-        _session = session;
+        _dbSession = dbSession;
     }
     ~this()
     {
-        _session.close();
+        _dbSession.close();
     }
 
-    hibernated.session.Session _session;
-    alias _session this;
+    db.Session _dbSession;
+    alias _dbSession this;
 }
 
 // entity definition
 class User
 {
     this(){}
-    this(string id, string name)
+    this(in User user)
     {
-        this.id   = id;
-        this.name = name;
+        this.id             = user.id;
+        this.hashedPassword = user.hashedPassword;
+        this.name           = user.name;
+    }
+    this(string id, string password, string name)
+    {
+        this.id             = id;
+        this.hashedPassword = hash(password);
+        this.name           = name;
     }
 
-    @Id
+    @(db.Id)
     string id;
+    string hashedPassword;
     string name;
+
+    static pure string hash(string source)
+    {
+        return (cast(ubyte[])sha224Of(source)).toHexString;
+    }
 }
 
 // rest api definition
@@ -37,8 +51,8 @@ interface IUserApi
 {
     @path("")    User[] get();
     @path(":id") User   get(string _id);
-    @path("")    void   add(string id_, string name);
-    @path(":id") void   set(string _id, string id_ = null, string name = null); 
+    @path("")    void   add(string id_, string password, string name);
+    @path(":id") void   set(string _id, string id_ = null, string password = null, string name = null); 
     @path(":id") void   remove(string _id);
 }
 
@@ -47,60 +61,71 @@ class UserApi : IUserApi
 {
     private
     {
-        SessionFactory _sessionFactory;
+        db.SessionFactory _dbSessionFactory;
 
-        hibernated.session.Session openSession()
+        db.Session openDbSession()
         {
-            return _sessionFactory.openSession;
+            return _dbSessionFactory.openSession;
         }
     }
 
-    this(SessionFactory sessionFactory)
+    this(db.SessionFactory dbSessionFactory)
     {
-        _sessionFactory = sessionFactory;
+        _dbSessionFactory = dbSessionFactory;
     }
 
     override
     {
         User[] get()
         {
-            return openSession.closing.createQuery("FROM User").list!User;
+            return openDbSession.closing.createQuery("FROM User").list!User;
         }
 
         User get(string id)
         {
-            return enforceHTTP(openSession.closing.get!User(id), HTTPStatus.notFound);
+            return enforceHTTP(openDbSession.closing.get!User(id), HTTPStatus.notFound);
         }
 
-        void add(string id, string name)
+        void add(string id, string password, string name)
         {
-            auto session = openSession.closing;
-            enforceHTTP(session.get!User(id) is null, HTTPStatus.conflict);
-            session.persist(new User(id, name));
+            auto dbSession = openDbSession.closing;
+            enforceHTTP(dbSession.get!User(id) is null, HTTPStatus.conflict);
+            dbSession.persist(new User(id, password, name));
         }
 
-        void set(string id, string newId, string name)
+        void set(string id, string newId, string password, string name)
         {
-            auto session = openSession.closing;
-            auto user = enforceHTTP(session.get!User(id), HTTPStatus.notFound);
+            auto dbSession = openDbSession.closing;
+            auto user = enforceHTTP(dbSession.get!User(id), HTTPStatus.notFound);
 
             if (newId && newId.length && newId != id)
             {
-                enforceHTTP(session.get!User(newId) is null, HTTPStatus.conflict);
-                session.persist(new User(newId, name && name.length ? name : user.name));
-                session.remove(user);
+                enforceHTTP(dbSession.get!User(newId) is null, HTTPStatus.conflict);
+
+                auto newUser = new User(user);
+                newUser.id = newId;
+                if (password && password.length)
+                    newUser.hashedPassword = User.hash(password);
+                if (name && name.length)
+                    newUser.name = name;
+
+                dbSession.persist(newUser);
+                dbSession.remove(user);
             }
-            else if (name && name.length)
+            else
             {
-                user.name = name;
-                session.update(user);
+                if (name && name.length)
+                    user.name = name;
+                if (password && password.length)
+                    user.hashedPassword = User.hash(password);
+                dbSession.update(user);
             }
         }
 
         void remove(string id)
         {
-            auto session = openSession.closing;
-            session.remove(session.get!User(id));
+            auto dbSession = openDbSession.closing;
+            dbSession.remove(dbSession.get!User(id));
         }
     }
 }

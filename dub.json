@@ -5,9 +5,9 @@
 	"authors": ["luncheon"],
 	"homepage": "https://github.com/luncheon/vibe-d-restful-sample",
 	"dependencies": {
-		"vibe-d":     "~>0.7.19",
-		"hibernated": "~>0.2.19"
+		"vibe-d":     "~>0.7.22",
+		"hibernated": "~>0.2.24",
 	},
 	"versions": ["VibeCustomMain"],
-	"targetPath": "bin"
+	"targetPath": "bin",
 }

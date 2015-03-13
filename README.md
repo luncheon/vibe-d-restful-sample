@@ -19,9 +19,10 @@ cinst dmd
 cinst dub
 ```
 
-2. Start server.
+2. Initialize database and start server.
 
  ```
 cd <project-root>
+dub -- initdb
 dub
 ```
