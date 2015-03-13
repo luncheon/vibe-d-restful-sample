@@ -10,7 +10,7 @@ html
             body { margin: 0; padding: 0; font-family: Verdana,'Meiryo UI',Arial,sans-serif; }
             #header { padding: 8px 32px; background-color: rgb(32, 32, 32); color: rgb(196, 196, 196); }
             #content { padding: 8px; }
-            .toolbar-button { background: inherit; color: inherit; border: none; cursor: pointer; }
+            .toolbar-button { background: transparent; color: inherit; border: none; cursor: pointer; }
             input, button, select, textarea { font-family: inherit; font-weight: inherit; }
             .w2ui-reset, .w2ui-reset table, .w2ui-tag .w2ui-tag-body, .w2ui-lock-msg, .w2ui-list ul li, .w2ui-list ul li:last-child input, .w2ui-overlay .w2ui-select-field table, .w2ui-popup { font-family: inherit; }
             .w2ui-col-on-off td[colspan="2"] { display: none; } /* hide 'Save Grid State', 'Restore Default State' */
@@ -52,7 +52,8 @@ html
                 - else
                     button.toolbar-button(onclick="$(this).w2overlay($('#login-form').html()); $('input[name=id]').focus();") Login
                     #login-form(style="display: none;")
-                        form(action="/login", method="POST", style="padding: 12px;")
+                        // w2ui 1.4.2 sucks! pressing enter key doesn't submit forms!
+                        form(action="/login", method="POST", style="padding: 12px;", onkeypress="if(event.keyCode===13){this.submit();return false;}")
                             .w2ui-field
                                 label ID:
                                 div
