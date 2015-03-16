@@ -82,12 +82,15 @@ int run()
     router.registerRestInterface(new UserApi(dbSessionFactory ), "/users");
 
     auto settings = new HTTPServerSettings;
-    settings.port = 8080;
+    settings.port = 8443;
     settings.bindAddresses = ["::1", "127.0.0.1"];
     settings.sessionStore = new MemorySessionStore;
+    settings.sslContext = createSSLContext(SSLContextKind.server);
+    settings.sslContext.useCertificateChainFile("ssl/server.crt");
+    settings.sslContext.usePrivateKeyFile("ssl/server.key");
     settings.listenHTTP(router);
 
-    logInfo("Open http://localhost:8080/ in your browser.");
+    logInfo("Open https://localhost:8443/ in your browser.");
     return runEventLoop();
 }
 
