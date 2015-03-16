@@ -1,2 +1,17 @@
+msgid "language"
+msgstr "English"
+
+msgid "login"
+msgstr "Login"
+
+msgid "logout"
+msgstr "Logout"
+
+msgid "password"
+msgstr "Password"
+
+msgid "name"
+msgstr "Name"
+
 msgid "w2ui.localize"
 msgstr ""

@@ -1,2 +1,17 @@
+msgid "language"
+msgstr "日本語"
+
+msgid "login"
+msgstr "ログイン"
+
+msgid "logout"
+msgstr "ログアウト"
+
+msgid "password"
+msgstr "パスワード"
+
+msgid "name"
+msgstr "名前"
+
 msgid "w2ui.localize"
 msgstr "w2utils.locale('/w2ui/locale/ja-jp.json');"

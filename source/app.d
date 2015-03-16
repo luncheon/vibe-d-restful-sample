@@ -9,6 +9,7 @@ struct TranslationContext
     mixin translationModule!"common";
     enum enforceExistingKeys = true;
 }
+static assert(tr!(TranslationContext, "ja_JP")("language") == "日本語");
 
 @translationContext!TranslationContext
 class UserWebInterface
