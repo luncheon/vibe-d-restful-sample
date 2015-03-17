@@ -30,15 +30,20 @@ class User
     }
     this(string id, string password, string name)
     {
-        this.id             = id;
-        this.hashedPassword = hash(password);
-        this.name           = name;
+        this.id       = id;
+        this.password = password;
+        this.name     = name;
     }
 
     @(db.Id)
     string id;
     string hashedPassword;
     string name;
+
+    @property void password(string password)
+    {
+        hashedPassword = hash(password);
+    }
 
     static pure string hash(string source)
     {
@@ -88,8 +93,9 @@ class UserApi : IUserApi
 
         void add(string id, string password, string name)
         {
+            enforceHTTP(!id.empty && !name.empty, HTTPStatus.badRequest, "id and name must not be empty.");
             auto dbSession = openDbSession.closing;
-            enforceHTTP(dbSession.get!User(id) is null, HTTPStatus.conflict);
+            enforceHTTP(dbSession.get!User(id) is null, HTTPStatus.conflict, "id `" ~ id ~ "` already exists.");
             dbSession.persist(new User(id, password, name));
         }
 
@@ -98,15 +104,15 @@ class UserApi : IUserApi
             auto dbSession = openDbSession.closing;
             auto user = enforceHTTP(dbSession.get!User(id), HTTPStatus.notFound);
 
-            if (newId && newId.length && newId != id)
+            if (!newId.empty && newId != id)
             {
-                enforceHTTP(dbSession.get!User(newId) is null, HTTPStatus.conflict);
+                enforceHTTP(dbSession.get!User(newId) is null, HTTPStatus.conflict, "id `" ~ newId ~ "` already exists.");
 
                 auto newUser = new User(user);
                 newUser.id = newId;
-                if (password && password.length)
-                    newUser.hashedPassword = User.hash(password);
-                if (name && name.length)
+                if (!password.empty)
+                    newUser.password = password;
+                if (!name.empty)
                     newUser.name = name;
 
                 dbSession.persist(newUser);
@@ -114,10 +120,10 @@ class UserApi : IUserApi
             }
             else
             {
-                if (name && name.length)
+                if (!name.empty)
                     user.name = name;
-                if (password && password.length)
-                    user.hashedPassword = User.hash(password);
+                if (!password.empty)
+                    user.password = password;
                 dbSession.update(user);
             }
         }
@@ -125,7 +131,8 @@ class UserApi : IUserApi
         void remove(string id)
         {
             auto dbSession = openDbSession.closing;
-            dbSession.remove(dbSession.get!User(id));
+            auto user = dbSession.get!User(id);
+            user && dbSession.remove(user);
         }
     }
 }

@@ -18,6 +18,14 @@ html
                 password: '#{trWeb("password")}',
             };
         :javascript
+            var serializeObject = function (form) {
+                var result = {};
+                $(form).serializeArray().forEach(function (item) {
+                    result[item.name] = item.value;
+                });
+                return result;
+            };
+
             var RestClient = (function () {
                 'use strict';
 
@@ -42,6 +50,8 @@ html
                     this.update = function (id, data) { return request(baseurl + '/' + id, 'PUT', data); };
                 };
             })();
+
+            var api = { users: new RestClient('/users') };
     body
         #header
             div(align="right")
@@ -67,12 +77,27 @@ html
                                 button.btn(type="submit")& login
         #content
             #users
+
+        #add-form(style="display: none;")
+            form(style="padding: 12px;", onsubmit="api.users.create(serializeObject(this)).done(function(){w2popup.close();w2ui.users.onReload();}); return false;")
+                .w2ui-field
+                    label ID:
+                    div
+                        input(type="text", name="id")
+                .w2ui-field
+                    label= trWeb("password")~":"
+                    div
+                        input(type="password", name="password")
+                .w2ui-field
+                    label= trWeb("name")~":"
+                    div
+                        input(type="text", name="name")
+                div(align="center")
+                    button.btn(type="submit") Submit
         :javascript
             (function () {
                 'use strict';
 
-                var api = { users: new RestClient('/users') };
-                var deletedIds = [];
                 $('#users').w2grid({
                     name: 'users',
                     header: 'Users',
@@ -82,7 +107,6 @@ html
                         toolbar:       true,
                         toolbarAdd:    editable,
                         toolbarDelete: editable,
-                        toolbarSave:   editable,
                     },
                     columns: [
                         { field: 'id',       caption: 'ID',               size: '20%', editable: editable && {type: 'text'} },
@@ -91,7 +115,6 @@ html
                     ],
                     onReload: function (event) {
                         var self = this;
-                        deletedIds = [];
                         api.users.get().done(function (data) {
                             var recid = 0;
                             self.records = data.map(function (item) { return {recid: ++recid, originalId: item.id, id: item.id, name: item.name} });
@@ -99,30 +122,25 @@ html
                         });
                     },
                     onAdd: function (event) {
-                        var newid = this.records.reduce(function (max, item) { return Math.max(max, item.recid) }, 0) + 1;
-                        this.add({ recid: newid, id: '', name: '' });
-                        this.editField(newid, 0);
+                        $('#add-form').w2popup({title: 'New User', modal: true, width: 400, height: 200});
+                        $('form input[name=id]').focus();
                     },
                     onDelete: function (event) {
-                        this.getSelection().forEach(function (recid) {
-                            var id = this.get(recid).originalId;
-                            if (typeof id !== 'undefined') {
-                                deletedIds.push(id);
-                            }
-                        }, this);
-                        event.force = true;
+                        if (event.force) {
+                            this.getSelection().forEach(function (id) {
+                                api.users.delete(this.get(id).originalId).done($.proxy(this.onReload, this));
+                            }, this);
+                        }
                     },
-                    onSubmit: function (event) {
-                        var deferreds = deletedIds.map(api.users.delete)
-                            .concat(event.changes.map(function (changes) {
-                                var record = this.get(changes.recid);
-                                if (record.originalId) {
-                                    return api.users.update(record.originalId, changes);
-                                } else {
-                                    return api.users.create(changes);
-                                }
-                            }, this));
-                        $.when.apply($, deferreds).then($.proxy(this.onReload, this));
+                    onChange: function (event) {
+                        console.log(event);
+                        if (!event.value_new) {
+                            event.preventDefault();
+                        } else {
+                            var data = {};
+                            data[this.columns[event.column].field] = event.value_new;
+                            api.users.update(this.get(event.recid).originalId, data).done($.proxy(this.onReload, this));
+                        }
                     },
                 }).onReload();
             })();
