@@ -11,16 +11,10 @@ html
         link(rel="stylesheet", type="text/css", href="default.css")
         script(src="//code.jquery.com/jquery-git2.min.js")
         script(src="w2ui/w2ui-1.4.2.min.js")
-        script& w2ui.localize
         script(src="client.js")
         script.
-            var editable = #{loggedin || useLocalStorage};
-            var localized = {
-                name:     '#{trWeb("name")}',
-                password: '#{trWeb("password")}',
-            };
-
-        :javascript
+            #{trWeb("w2ui.localize")}
+            var api = { users: new client.#{useLocalStorage ? "LocalStorage" : "RestClient"}('users') };
             var serializeObject = function (form) {
                 var result = {};
                 $(form).serializeArray().forEach(function (item) {
@@ -30,43 +24,50 @@ html
             };
 
         - if (useLocalStorage)
-            :javascript
-                var api = { users: new client.LocalStorage('users') };
+            script.
+                var session = { user: api.users.getSessionUser() };
                 if (api.users.load().length === 0) {
                     api.users.create({id: 'user', password: 'user', name: 'Initial User'});
                 }
+        - else if (loggedin)
+            script.
+                var session = { user: { id: '#{req.session.get!string("user.id")}', name: '#{req.session.get!string("user.name")}' } };
         - else
-            :javascript
-                var api = { users: new client.RestClient('users') };
+            script.
+                var session = { user: null };
     body
-        - if (!useLocalStorage)
-            #header
-                div(align="right")
-                    - if (loggedin)
-                        button.toolbar-button(onclick="$(this).w2overlay($('#login-form').html());")= req.session.get!string("user.name")
-                        #login-form(style="display: none;")
-                            form(action="logout", method="POST", style="padding: 8px;")
-                                button.btn& logout
-                    - else
-                        button.toolbar-button(onclick="$(this).w2overlay($('#login-form').html()); $('input[name=id]').focus();")& login
-                        #login-form(style="display: none;")
-                            // w2ui 1.4.2 sucks! pressing enter key doesn't submit forms!
-                            form(action="login", method="POST", style="padding: 12px;", onkeypress="if(event.keyCode===13){this.submit();return false;}")
-                                .w2ui-field
-                                    label ID:
-                                    div
-                                        input(type="text", name="id")
-                                .w2ui-field
-                                    label= trWeb("password")~":"
-                                    div
-                                        input(type="password", name="password")
-                                div(align="center")
-                                    button.btn(type="submit")& login
+        #header
+            div(align="right")
+                button#loggedin.toolbar-button(style="display: none;", onclick="$(this).w2overlay($('#logout-form').html());")
+                .overlay-container#logout-form
+                    form(onsubmit="api.users.logout(); return false;")
+                        button.btn(type="submit")& logout
+
+                button#login.toolbar-button(style="display: none;", onclick="$(this).w2overlay($('#login-form').html()); $('input[name=id]').focus();")& login
+                .overlay-container#login-form
+                    form(onsubmit="api.users.login(serializeObject(this)); return false;")
+                        .w2ui-field
+                            label ID:
+                            div
+                                input(type="text", name="id")
+                        .w2ui-field
+                            label= trWeb("password")~":"
+                            div
+                                input(type="password", name="password")
+                        div(align="center")
+                            button.btn(type="submit")& login
+
+                :javascript
+                    if (session.user) {
+                        $('#loggedin').css('display', '').text(session.user.name);
+                    } else {
+                        $('#login').css('display', '');
+                    }
         #content
             #users
 
-        #add-form(style="display: none;")
-            form(style="padding: 12px;", onsubmit="api.users.create(serializeObject(this)).done(function(){w2popup.close();w2ui.users.onReload();}); return false;")
+        .popup-container#add-form
+            form(onsubmit="api.users.create(serializeObject(this)).done(function(){w2popup.close();w2ui.users.onReload();}); return false;")
                 .w2ui-field
                     label ID:
                     div
@@ -80,11 +81,12 @@ html
                     div
                         input(type="text", name="name")
                 div(align="center")
-                    button.btn(type="submit") Submit
-        :javascript
+                    button.btn(type="submit")& add
+        script.
             (function () {
                 'use strict';
 
+                var editable = session.user;
                 $('#users').w2grid({
                     name: 'users',
                     header: 'Users',
@@ -96,9 +98,9 @@ html
                         toolbarDelete: editable,
                     },
                     columns: [
-                        { field: 'id',       caption: 'ID',               size: '20%', editable: editable && {type: 'text'} },
-                        { field: 'password', caption: localized.password, size: '30%', editable: editable && {type: 'password'}, render: function (record) { return '******' } },
-                        { field: 'name',     caption: localized.name,     size: '50%', editable: editable && {type: 'text'} },
+                        { field: 'id',       caption: 'ID',                   size: '20%', editable: editable && {type: 'text'} },
+                        { field: 'password', caption: '#{trWeb("password")}', size: '30%', editable: editable && {type: 'password'}, render: function (record) { return '******' } },
+                        { field: 'name',     caption: '#{trWeb("name")}',     size: '50%', editable: editable && {type: 'text'} },
                     ],
                     onReload: function (event) {
                         var self = this;
@@ -109,13 +111,13 @@ html
                         });
                     },
                     onAdd: function (event) {
-                        $('#add-form').w2popup({title: 'New User', modal: true, width: 400, height: 200});
+                        $('#add-form').w2popup({title: '#{trWeb("new user")}', modal: true, width: 400, height: 200});
                         $('form input[name=id]').focus();
                     },
                     onDelete: function (event) {
                         if (event.force) {
                             this.getSelection().forEach(function (id) {
-                                api.users.delete(this.get(id).originalId).done($.proxy(this.onReload, this));
+                                api.users.delete(this.get(id).originalId).then($.proxy(this.onReload, this));
                             }, this);
                         }
                     },
@@ -125,7 +127,7 @@ html
                         } else {
                             var data = {};
                             data[this.columns[event.column].field] = event.value_new;
-                            api.users.update(this.get(event.recid).originalId, data).done($.proxy(this.onReload, this));
+                            api.users.update(this.get(event.recid).originalId, data).then($.proxy(this.onReload, this));
                         }
                     },
                 }).onReload();

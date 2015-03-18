@@ -110,7 +110,7 @@ int initdb()
     return 0;
 }
 
-int buildLocalStorageVersion()
+int runLocalStorageVersion()
 {
     auto file = openFile("public/localstorage.html", FileMode.createTrunc);
     scope (exit) file.close;
@@ -118,7 +118,7 @@ int buildLocalStorageVersion()
     HTTPServerRequest req = null;
     auto trWeb = (string s) => tr!(TranslationContext, "en_US")(s);
     compileDietFile!("index.dt", req, trWeb)(file);
-    return 0;
+    return run();
 }
 
 int main(string[] args)
@@ -131,7 +131,7 @@ int main(string[] args)
     case "initdb":
         return initdb();
     case "localstorage":
-        return buildLocalStorageVersion();
+        return runLocalStorageVersion();
     default:
         logError("Unknown option: " ~ option);
         return 1;

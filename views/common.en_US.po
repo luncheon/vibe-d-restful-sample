@@ -13,5 +13,11 @@ msgstr "Password"
 msgid "name"
 msgstr "Name"
 
+msgid "add"
+msgstr "Add"
+
+msgid "new user"
+msgstr "New User"
+
 msgid "w2ui.localize"
 msgstr ""

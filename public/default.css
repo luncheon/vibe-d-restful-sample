@@ -16,12 +16,20 @@ body {
     padding: 8px;
 }
 
+.popup-container, .overlay-container {
+    display: none;
+}
+.w2ui-popup form, .w2ui-overlay form {
+    padding: 12px;
+}
+
 .toolbar-button {
     background: transparent;
     color: inherit;
     border: none;
     cursor: pointer;
 }
+
 
 input,
 button,

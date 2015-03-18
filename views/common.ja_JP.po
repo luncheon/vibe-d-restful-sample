@@ -13,5 +13,11 @@ msgstr "パスワード"
 msgid "name"
 msgstr "名前"
 
+msgid "add"
+msgstr "追加"
+
+msgid "new user"
+msgstr "新規ユーザー"
+
 msgid "w2ui.localize"
 msgstr "w2utils.locale('/w2ui/locale/ja-jp.json');"

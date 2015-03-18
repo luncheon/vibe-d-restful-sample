@@ -21,6 +21,19 @@ var client = (function () {
             this.delete = function (id)       { return request(baseurl + '/' + id, 'DELETE'); }
             this.create = function (data)     { return request(baseurl,            'POST', data); }
             this.update = function (id, data) { return request(baseurl + '/' + id, 'PUT', data); }
+
+            this.login  = function (data) {
+                return $.post('login', data).done(function (data, status, xhr) {
+                    var cookie = xhr.getResponseHeader('Set-Cookie');
+                    if (cookie) {
+                        document.cookie = cookie;
+                    }
+                    location.reload();
+                }).fail(function () { alert('login failure'); });
+            }
+            this.logout = function () {
+                return $.post('logout').then(function () { location.reload(); });
+            }
         };
     })();
 
@@ -47,8 +60,13 @@ var client = (function () {
             this.save = function (items) {
                 localStorage.setItem(baseurl, JSON.stringify(items));
             }
-            this.get = function () {
-                return resolve(this.load());
+            this.get = function (id) {
+                if (id) {
+                    var found = this.load().find(byId(id));
+                    return found ? resolve(found) : reject('Not Found');
+                } else {
+                    return resolve(this.load());
+                }
             }
             this.delete = function (id) {
                 this.save(this.load().filter(function (item) { return item.id !== id; }));
@@ -79,6 +97,27 @@ var client = (function () {
                     items[index][key] = data[key] || items[index][key];
                 }
                 this.save(items);
+                return resolve();
+            }
+            this.getSessionUser = function () {
+                return JSON.parse(sessionStorage.getItem('user'));
+            }
+            this.login = function (data) {
+                var users = this.load();
+                var index = users.findIndex(function (user) { return user.id === data.id; });
+                var user = index === -1 ? null : users[index];
+
+                if (user && user.password === data.password) {
+                    sessionStorage.setItem('user', JSON.stringify(user));
+                    location.reload();
+                    return resolve();
+                } else {
+                    return reject('login failure');
+                }
+            }
+            this.logout = function () {
+                sessionStorage.clear();
+                location.reload();
                 return resolve();
             }
         }
