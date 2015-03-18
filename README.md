@@ -4,7 +4,7 @@ A simple web application that presents minimal usage of following frameworks.
 
 * [vibe.d](http://vibed.org/)
 * [HibernateD](https://github.com/buggins/hibernated)
-* [w2ui](http://w2ui.com/) - w2grid
+* [w2ui](http://w2ui.com/)
 
 
 ### Quick Start on Windows
