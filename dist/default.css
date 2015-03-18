@@ -1,0 +1,53 @@
+@charset "utf-8";
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Verdana,'Meiryo UI',Arial,sans-serif;
+}
+
+#header {
+    padding: 8px 32px;
+    background-color: rgb(32, 32, 32);
+    color: rgb(196, 196, 196);
+}
+
+#content {
+    padding: 8px;
+}
+
+.popup-container, .overlay-container {
+    display: none;
+}
+.w2ui-popup form, .w2ui-overlay form {
+    padding: 12px;
+}
+
+.toolbar-button {
+    background: transparent;
+    color: inherit;
+    border: none;
+    cursor: pointer;
+}
+
+
+input,
+button,
+select,
+textarea,
+.w2ui-reset,
+.w2ui-reset table,
+.w2ui-tag .w2ui-tag-body,
+.w2ui-lock-msg,
+.w2ui-list ul li,
+.w2ui-list ul li:last-child input,
+.w2ui-overlay .w2ui-select-field table,
+.w2ui-popup
+{
+   font-family: inherit;
+   font-weight: inherit;
+}
+
+.w2ui-col-on-off td[colspan="2"] {
+    display: none; /* hide 'Save Grid State', 'Restore Default State' */    
+}
