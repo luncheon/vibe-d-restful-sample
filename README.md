@@ -6,6 +6,7 @@ A simple web application that presents minimal usage of following frameworks.
 * [HibernateD](https://github.com/buggins/hibernated)
 * [w2ui](http://w2ui.com/)
 
+LocalStorage version is [working](https://luncheon.github.io/vibe-d-restful-sample/dist/localstorage.html) on [GitHub Pages](https://luncheon.github.io/vibe-d-restful-sample/).
 
 ### Quick Start on Windows
 
