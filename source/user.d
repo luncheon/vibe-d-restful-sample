@@ -64,44 +64,36 @@ interface IUserApi
 // rest api implementation
 class UserApi : IUserApi
 {
-    private
-    {
-        db.SessionFactory _dbSessionFactory;
-
-        db.Session openDbSession()
-        {
-            return _dbSessionFactory.openSession;
-        }
-    }
+    private db.SessionFactory _db;
 
     this(db.SessionFactory dbSessionFactory)
     {
-        _dbSessionFactory = dbSessionFactory;
+        _db = dbSessionFactory;
     }
 
     override
     {
         User[] get()
         {
-            return openDbSession.closing.createQuery("FROM User").list!User;
+            return _db.openSession.closing.createQuery("FROM User").list!User;
         }
 
         User get(string id)
         {
-            return enforceHTTP(openDbSession.closing.get!User(id), HTTPStatus.notFound);
+            return enforceHTTP(_db.openSession.closing.get!User(id), HTTPStatus.notFound);
         }
 
         void add(string id, string password, string name)
         {
             enforceHTTP(!id.empty && !name.empty, HTTPStatus.badRequest, "id and name must not be empty.");
-            auto dbSession = openDbSession.closing;
+            auto dbSession = _db.openSession.closing;
             enforceHTTP(dbSession.get!User(id) is null, HTTPStatus.conflict, "id `" ~ id ~ "` already exists.");
             dbSession.persist(new User(id, password, name));
         }
 
         void set(string id, string newId, string password, string name)
         {
-            auto dbSession = openDbSession.closing;
+            auto dbSession = _db.openSession.closing;
             auto user = enforceHTTP(dbSession.get!User(id), HTTPStatus.notFound);
 
             if (!newId.empty && newId != id)
@@ -130,7 +122,7 @@ class UserApi : IUserApi
 
         void remove(string id)
         {
-            auto dbSession = openDbSession.closing;
+            auto dbSession = _db.openSession.closing;
             auto user = dbSession.get!User(id);
             user && dbSession.remove(user);
         }

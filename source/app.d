@@ -63,9 +63,7 @@ void checkSession(HTTPServerRequest req, HTTPServerResponse res)
 {
     if ([HTTPMethod.POST, HTTPMethod.PUT, HTTPMethod.PATCH, HTTPMethod.DELETE].canFind(req.method) && req.path != "/login")
     {
-        enforceHTTP(req.session.id, HTTPStatus.forbidden);
-        auto userId = req.session.get!string("user.id");
-        enforceHTTP(userId && userId.length, HTTPStatus.forbidden);
+        enforceHTTP(!req.session.id.empty && !req.session.get!string("user.id").empty, HTTPStatus.forbidden);
     }
 }
 
@@ -112,6 +110,17 @@ int initdb()
     return 0;
 }
 
+int buildLocalStorageVersion()
+{
+    auto file = openFile("public/localstorage.html", FileMode.createTrunc);
+    scope (exit) file.close;
+
+    HTTPServerRequest req = null;
+    auto trWeb = (string s) => tr!(TranslationContext, "en_US")(s);
+    compileDietFile!("index.dt", req, trWeb)(file);
+    return 0;
+}
+
 int main(string[] args)
 {
     auto option = args[1..$].join(" ");
@@ -121,6 +130,8 @@ int main(string[] args)
         return run();
     case "initdb":
         return initdb();
+    case "localstorage":
+        return buildLocalStorageVersion();
     default:
         logError("Unknown option: " ~ option);
         return 1;
