@@ -38,12 +38,14 @@ html
     body
         #header
             div(align="right")
-                button#loggedin.toolbar-button(style="display: none;", onclick="$(this).w2overlay($('#logout-form').html());")
+                a.toolbar-button(href="https://github.io/luncheon/vibe-d-restful-sample/") GitHub
+                a.toolbar-button(href="https://luncheon.github.io/vibe-d-restful-sample/") GitHub Pages
+                a.toolbar-button#loggedin(style="display: none;", onclick="$(this).w2overlay($('#logout-form').html());")
                 .overlay-container#logout-form
                     form(onsubmit="api.users.logout(); return false;")
                         button.btn(type="submit")& logout
 
-                button#login.toolbar-button(style="display: none;", onclick="$(this).w2overlay($('#login-form').html()); $('input[name=id]').focus();")& login
+                a.toolbar-button#login(style="display: none;", onclick="$(this).w2overlay($('#login-form').html()); $('input[name=id]').focus();")& login
                 .overlay-container#login-form
                     form(onsubmit="api.users.login(serializeObject(this)); return false;")
                         .w2ui-field
