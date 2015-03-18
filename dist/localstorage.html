@@ -29,13 +29,15 @@ if (api.users.load().length === 0) {
 	<body>
 		<div id="header">
 			<div align="right">
-				<button id="loggedin" style="display: none;" onclick="$(this).w2overlay($(&#39;#logout-form&#39;).html());" class="toolbar-button"></button>
+				<a href="https://github.io/luncheon/vibe-d-restful-sample/" class="toolbar-button">GitHub</a>
+				<a href="https://luncheon.github.io/vibe-d-restful-sample/" class="toolbar-button">GitHub Pages</a>
+				<a id="loggedin" style="display: none;" onclick="$(this).w2overlay($(&#39;#logout-form&#39;).html());" class="toolbar-button"></a>
 				<div id="logout-form" class="overlay-container">
 					<form onsubmit="api.users.logout(); return false;">
 						<button type="submit" class="btn">logout</button>
 					</form>
 				</div>
-				<button id="login" style="display: none;" onclick="$(this).w2overlay($(&#39;#login-form&#39;).html()); $(&#39;input[name=id]&#39;).focus();" class="toolbar-button">login</button>
+				<a id="login" style="display: none;" onclick="$(this).w2overlay($(&#39;#login-form&#39;).html()); $(&#39;input[name=id]&#39;).focus();" class="toolbar-button">login</a>
 				<div id="login-form" class="overlay-container">
 					<form onsubmit="api.users.login(serializeObject(this)); return false;">
 						<div class="w2ui-field">

@@ -3,6 +3,7 @@
 body {
     margin: 0;
     padding: 0;
+    font-size: 81.25%;
     font-family: Verdana,'Meiryo UI',Arial,sans-serif;
 }
 
@@ -10,6 +11,9 @@ body {
     padding: 8px 32px;
     background-color: rgb(32, 32, 32);
     color: rgb(196, 196, 196);
+}
+#header > div > * {
+    margin-right: 1em;
 }
 
 #content {
@@ -28,8 +32,12 @@ body {
     color: inherit;
     border: none;
     cursor: pointer;
+    text-decoration: none;
+    transition: color .3s linear 0;
 }
-
+.toolbar-button:hover {
+    color: rgb(255, 255, 192);
+}
 
 input,
 button,
